@@ -4,23 +4,23 @@
 
 ## Scope of this guide 
 
-With this little guide I am trying to teach you the basics of Docker, which are required to get started. From my experience, beginners tend to build Dockerfiles which are not optimised for storage and fast build time. That is why I have focused on this topic, by explaining best-practices for Dockerfiles, image layers, choosing base images, chaining commands and much more.
+With this little guide I am trying to teach you the basics of Docker, which are required to get started. From my experience, beginners tend to build Dockerfiles which are not optimised for storage and fast build time. That is why I have focused on this topic, by explaining best-practices for Dockerfiles, image layers, choosing parent images, chaining commands and much more.
 
 ## Chapters
-- Why should you learn Docker?
-- Virtualization
-- So what are Docker containers?
-- Docker architecture
-- Dockerfile → Image → Container
-- Increasing performance 
-- How to install Docker on your machine
-- Docker cli commands
-- Run your first container
-- Building a Dockerfile
-- Outlook: Docker Compose
+- [Why you should learn Docker](#why-you-should-learn-docker)
+- [Virtualization](#virtualization)
+- [What are Docker containers?](#what-are-docker-containers)
+- [Docker architecture](#docker-architecture)
+- [Dockerfile → Image → Container](#dockerfile-→-image-→-container)
+- [Increasing performance](#increasing-performance)
+- [How to install Docker on your machine](#how-to-install-docker-on-your-machine)
+- [Docker cli commands](#docker-cli-commands)
+- [Run your first container](#run-your-first-container)
+- [Building a Dockerfile](#building-a-dockerfile)
+- [Outlook: Docker Compose](#outlook-docker-compose)
 
 
-## Why should you learn Docker?
+## Why you should learn Docker
 
 As a professional in the field of IT, whether you're working in DevOps, Software Engineering or Data Engineering, having knowledge of containerization is crucial. According to the jobscraping website datanerd.tech, Docker is mentioned in 16% of all job postings for Software Engineers. However, even if it is not explicitly mentioned in the job description, at some point in your career, you will find the need to containerize something.
 
@@ -31,17 +31,17 @@ So let's take a step back and understand some concepts.
 
 ## Virtualization 
 
-In a broader sense, virtualization refers to the creation of a virtual version of something. In the field of IT, virtualization allows you to create multiple instances of a machine within a machine, with each instance having its own operating system to run various applications. A hypervisor is responsible for creating and managing these virtual machines, allocating resources to them and separating multiple VMs on the same host. Virtual machines offer a high degree of isolation from the host and are great for utilizing your servers to the fullest if they would otherwise not be fully utilized. Cloud servers like EC2, for example, use virtual machines with virtual disks to maximize the usage of AWS servers.
+In a broader sense, virtualization refers to the creation of a virtual version of something. In the field of IT, virtualization allows you to create multiple instances of a machine within a machine, with each instance having its own operating system to run various applications. A hypervisor is responsible for creating and managing these virtual machines, allocating resources to them and separating multiple VMs on the same host. Virtual machines offer a high degree of isolation from the host and are great for utilizing your servers to the fullest if they would otherwise not be fully utilized. Cloud servers like AWS EC2, for example, use virtual machines with virtual disks.
 
 However, scaling up a virtual machine requires the installation of an OS in each instance, which drains a lot of computational resources from the host. Virtual machines also take a significant amount of time to start up and are a lot of overhead for many small services. Furthermore, just because an application works on your laptop, it does not necessarily mean it will work when running it on a VM in production.
 
 This is where containers come in hand. They are a lightweight way to package an application, are portable, and can be deployed almost anywhere (as long as Docker is installed on the host). Containers are also simple and fast to start up. When you package your application in a container, you have consistent behavior across machines, and it is isolated from the host (although not as much as with a VM). Additionally, containers generally require fewer resources compared to a virtual machine.
 
-## So what are Docker containers?
+## What are Docker containers?
 
-An operating system has a kernel, which is used to communicate with the underlying hardware and the applications layer. A Docker container virtualizes the applications layer of an operating system, applications / dependencies and other required files, but uses the hosts kernel. In contrast to that, a virtual machine has its own kernel. This is also the reason why Docker starts up way faster and is more lightweight. 
+An operating system has a kernel, which is used to communicate with the underlying hardware. A Docker container virtualizes the applications layer of an operating system, applications / dependencies and other required files, but uses the hosts kernel. In contrast to that, a virtual machine has its own kernel. This is also the reason why Docker starts up way faster and is more lightweight. 
 
-So docker containers are mostly linux based and use the hosts kernel, does that mean I can run Linux containers only on a Linux Os? 
+Docker containers are mostly Linux based and use the hosts kernel, does that mean I can run Linux containers only on a Linux Os? 
 
 __No__, if you are using Mac OS or Windows you can download Docker Desktop, which runs a Linux Kit VM  on which the containers will run. 
 
@@ -79,19 +79,19 @@ When talking about increasing  performance and Docker. One generally refers to t
 
 These are topics that are not trivial and thus often being neglected by beginners, who just want to containerize something. However they are important and can save a lot of nerves and cost over the long run. 
 
-In this guide I will teach you the basics of optimizing your Images with a few tricks. One important prerequisite is that you have understand the concept of layers in Dockerfiles. In the following, I will name **7 ways of optimizing build time and size**. 
+In this guide I will teach you the basics of optimizing your images with a few tricks. One important prerequisite is that you have understand the concept of layers in Dockerfiles. In the following, I will name **7 ways of optimizing build time and size**. 
 
-One concept is to keep common layers that rarely change at the top of your Dockerfile or in a base image. This allows the layer to be cached and reused in later builds. If you would have them below statements that change more often in your Dockerfile the common ones would need to rerun too. (Remember layers depend on the ones below it). By keeping them as a lower layer and thus caching them when layers above it change, build time is decreased. 
+One concept is to keep common layers that rarely change at the top of your Dockerfile or in a parent image. This allows the layer to be cached and reused in later builds. If you would have them below statements that change more often in your Dockerfile the common ones would need to rerun too. (Remember layers depend on the ones below it). By keeping them as a lower layer and thus caching them when layers above it change, build time is decreased. 
 
-One thing, I see often is downloading a file in one statement and changing permissions in another one. This results in the file being copied to the current layer with the new permissions, doubling the disk space and network bandwidth for that file.
+One thing, I see often is downloading a file in one statement and changing permissions in another one. This results in the file being copied to the current layer, doubling the disk space and network bandwidth used for that file.
 
-In general you should understand that if you have a file in one layer and you do something with it in another statement, you will now have the original file and it’s changed version. 
+In general you should understand that if you have a file in one layer and you do something with it in another statement, you will now have the original file and it’s changed version in two different layers. 
 
 You can reduce layers by chaining Run commands together (especially when downloading dependencies). This leads to a reduced number of image layers. However chaining commands has the side effect that if a large chained statement fails, nothing of it can be cached. Thus if you have a RUN statement that might break often, it is a good idea to keep it in an extra statement. 
 
 Moreower for most images there exist slimmed down versions. For Python this is the python:version-slim Image. For Linux you do not necesseraly need a bloated Ubuntu image, when you also have a slimmed down Alpine Linux imagine. 
 
-When you are building multiple images that have a lot in common, you can build a parent base image with the layers that are needed in each of the other images. This enables us to apply changes that apply to all of them in one place and the common layers from that image can be loaded from cache, which saves build time.
+When you are building multiple images that have a lot in common, you can build a parent image with the layers that are needed in each of the other images. This enables us to apply changes that apply to all of them in one place and the common layers from that image can be loaded from cache, which saves build time.
 
 ## How to install Docker on your machine
 
@@ -110,7 +110,7 @@ And install Docker Desktop from the official website
 
 ## Docker cli commands
 
-I will present you the most important commands which are probably 90% of the ones you will use. These commands all have flags / options. I will not focus on all options / flags here, just on the most important ones. If you look into the official Docker documentation for each command, you will find all of them.
+I will present you the most important commands which are probably 90% of the ones you will use. These commands all have flags / options. I will not go into detail on all options / flags here, just on the most important ones. If you look into the official Docker documentation for each command, you will find all of them.
 
 **The build command**
 
@@ -254,8 +254,8 @@ Your to do's are:
 
 - navigate in the /example_container folder
 - build the Image 
-- run the container 
-- open your browser and go to: https://0.0.0.0:5000
+- run the container and map the relevant port
+- open your browser and go to: https://localhost:5000
 - stop the container 
 - remove the container 
 - remove the image
@@ -410,7 +410,7 @@ In the 3rd step the Workdir for all of the subsequent commands is set to /app, w
 
 ## Outlook: Docker Compose
 
-Imagine you are building a project that involves various containers for multiple services. You might want to share networks, create storage and start them up simoustanly. This is what docker compose is used for. Compose enables you to define: 
+Imagine you are building a project that involves various containers for multiple services. You might want to share networks, create storage and start them up simoustanly. This is what docker compose is used for. Compose enables you to define the follwoing things in one file: 
 - Storage for containers 
 - Network for containers 
 - Containers and their configs 
@@ -420,5 +420,5 @@ Imagine you are building a project that involves various containers for multiple
 
 You use a YAML template to define your services and their configurations. 
 Under the hood the docker daemon just parses the docker-compose.yml file and creates the containers with their configs etc. 
-Compose will not be scope of this guide, but is it useful to know it's purpose and advantages as a beginner.
+Compose will not be scope of this guide, but is it useful to know it's purpose, even as a beginner.
 

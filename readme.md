@@ -53,6 +53,9 @@ This is a very simple description of the underlying architecture of Docker, whic
 
 Docker's underlying architecture is based on a client-server model, where the client communicates with the Docker daemon via a REST API, network interface, or UNIX sockets. The Docker daemon manages images and containers, while the client is used to interact with the daemon by sending API requests such as 'docker run'.
 
+So far in this guide, the comparison has always been between containers and virtual machines due to their similar use case. However "under the hood", they are not very alike. A container consists of processes running on the host kernel. From a security standpoint this is obviously not optimal. Therefore containers make use of linux namespaces. Namespaces are a kernel feature, which groups ressources in a way, that processes within that namespace can see and use them but no ressources outside of the namespace. Each aspect of a container runs in a separate namespace and its access is limited to resources within that namespace. Ressources in this context might be process ids or files among other things. 
+Another problem is the limitation of computational ressource usage of containers. This is done via so called control groups or cgroups. They are another linux kernel feature. Each cgroup has a set of computational resources available, f.e per 100 milliseconds, 50 milliseconds of CPU time (This would correspond to half a core). The container processes are then assigned to docker's cgroup and can use the ressources of that group. 
+
 
 ## Dockerfile → Image → Container
 
